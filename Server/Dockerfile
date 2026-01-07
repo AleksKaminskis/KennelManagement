@@ -11,11 +11,11 @@ EXPOSE 8081
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
+WORKDIR /app
 COPY ["Server/Server.csproj", "Server/"]
 RUN dotnet restore "./Server/Server.csproj"
 COPY . .
-WORKDIR "/src/Server"
+WORKDIR "/Server"
 RUN dotnet build "./Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
