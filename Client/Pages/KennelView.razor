@@ -1,0 +1,107 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/kennels/view/{id:int}"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Kennel Details - Kennel Management</PageTitle>
+
+<h1>Kennel Details</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (kennel != null)
+{
+    <div class="card">
+        <div class="card-header">
+            <h3>Kennel @kennel.KennelNumber</h3>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Kennel Number:</dt>
+                <dd class="col-sm-9"><strong>@kennel.KennelNumber</strong></dd>
+
+                <dt class="col-sm-3">Size:</dt>
+                <dd class="col-sm-9">@kennel.Size</dd>
+
+                <dt class="col-sm-3">Status:</dt>
+                <dd class="col-sm-9">
+                    @if (kennel.IsOccupied)
+                    {
+                        <span class="badge bg-danger">Occupied</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Available</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Notes:</dt>
+                <dd class="col-sm-9">@(string.IsNullOrEmpty(kennel.Notes) ? "None" : kennel.Notes)</dd>
+
+                <dt class="col-sm-3">Created:</dt>
+                <dd class="col-sm-9">@kennel.CreatedAt.ToString("F")</dd>
+            </dl>
+
+            <AuthorizeView Roles="Admin,Staff">
+                <button class="btn btn-warning" @onclick="NavigateToEdit">
+                    <span class="oi oi-pencil"></span> Edit
+                </button>
+            </AuthorizeView>
+            <button class="btn btn-secondary" @onclick="GoBack">
+                <span class="oi oi-arrow-left"></span> Back
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Kennel not found.</div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private KennelDto? kennel;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKennel();
+    }
+
+    private async Task LoadKennel()
+    {
+        try
+        {
+            isLoading = true;
+            kennel = await ApiService.GetKennelAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading kennel: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToEdit()
+    {
+        Navigation.NavigateTo($"/kennels/edit/{Id}");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/kennels");
+    }
+}

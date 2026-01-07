@@ -1,0 +1,199 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/dogs/edit/{id:int}"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Dog - Kennel Management</PageTitle>
+
+<h1>Edit Dog</h1>
+
+@if (isLoadingDog || isLoadingCustomers)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (dogModel != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <EditForm Model="@dogModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-3">
+                    <label for="name">Name:</label>
+                    <InputText id="name" class="form-control" @bind-Value="dogModel.Name" />
+                    <ValidationMessage For="@(() => dogModel.Name)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="breed">Breed:</label>
+                    <InputText id="breed" class="form-control" @bind-Value="dogModel.Breed" />
+                    <ValidationMessage For="@(() => dogModel.Breed)" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="age">Age (years):</label>
+                            <InputNumber id="age" class="form-control" @bind-Value="dogModel.Age" />
+                            <ValidationMessage For="@(() => dogModel.Age)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="weight">Weight (kg):</label>
+                            <InputNumber id="weight" class="form-control" @bind-Value="dogModel.Weight" />
+                            <ValidationMessage For="@(() => dogModel.Weight)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="color">Color:</label>
+                    <InputText id="color" class="form-control" @bind-Value="dogModel.Color" />
+                    <ValidationMessage For="@(() => dogModel.Color)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="customerId">Owner:</label>
+                    <InputSelect id="customerId" class="form-control" @bind-Value="dogModel.CustomerId">
+                        <option value="0">-- Select Owner --</option>
+                        @foreach (var customer in customers)
+                        {
+                            <option value="@customer.Id">@customer.FirstName @customer.LastName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => dogModel.CustomerId)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="medicalNotes">Medical Notes:</label>
+                    <InputTextArea id="medicalNotes" class="form-control" @bind-Value="dogModel.MedicalNotes" rows="4" />
+                    <ValidationMessage For="@(() => dogModel.MedicalNotes)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Update Dog
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Dog not found.</div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private DogFormModel? dogModel;
+    private List<CustomerDto> customers = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+    private bool isLoadingDog = true;
+    private bool isLoadingCustomers = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadDog(), LoadCustomers());
+    }
+
+    private async Task LoadDog()
+    {
+        try
+        {
+            isLoadingDog = true;
+            var dog = await ApiService.GetDogAsync(Id);
+            if (dog != null)
+            {
+                dogModel = new DogFormModel
+                {
+                    Name = dog.Name,
+                    Breed = dog.Breed,
+                    Age = dog.Age,
+                    Color = dog.Color,
+                    Weight = dog.Weight,
+                    MedicalNotes = dog.MedicalNotes,
+                    CustomerId = dog.CustomerId
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading dog: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingDog = false;
+        }
+    }
+
+    private async Task LoadCustomers()
+    {
+        try
+        {
+            isLoadingCustomers = true;
+            customers = await ApiService.GetCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading customers: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingCustomers = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (dogModel == null) return;
+
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var success = await ApiService.UpdateDogAsync(Id, dogModel);
+            if (success)
+            {
+                Navigation.NavigateTo("/dogs");
+            }
+            else
+            {
+                errorMessage = "Failed to update dog.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating dog: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/dogs");
+    }
+}

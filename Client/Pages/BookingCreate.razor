@@ -1,0 +1,199 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/bookings/create"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Booking - Kennel Management</PageTitle>
+
+<h1>Create New Booking</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        @if (isLoadingData)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="@bookingModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-3">
+                    <label for="dogId">Dog:</label>
+                    <InputSelect id="dogId" class="form-control" @bind-Value="bookingModel.DogId">
+                        <option value="0">-- Select Dog --</option>
+                        @foreach (var dog in dogs)
+                        {
+                            <option value="@dog.Id">@dog.Name (@dog.Breed) - Owner: @dog.CustomerName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => bookingModel.DogId)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="kennelId">Kennel:</label>
+                    <InputSelect id="kennelId" class="form-control" @bind-Value="bookingModel.KennelId">
+                        <option value="0">-- Select Kennel --</option>
+                        @foreach (var kennel in kennels)
+                        {
+                            <option value="@kennel.Id">@kennel.KennelNumber (@kennel.Size) - @(kennel.IsOccupied ? "Occupied" : "Available")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => bookingModel.KennelId)" />
+                    <small class="form-text text-muted">Only showing all kennels. Please check availability for your selected dates.</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="checkInDate">Check-In Date:</label>
+                            <InputDate id="checkInDate" class="form-control" @bind-Value="bookingModel.CheckInDate" />
+                            <ValidationMessage For="@(() => bookingModel.CheckInDate)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="checkOutDate">Check-Out Date:</label>
+                            <InputDate id="checkOutDate" class="form-control" @bind-Value="bookingModel.CheckOutDate" />
+                            <ValidationMessage For="@(() => bookingModel.CheckOutDate)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="totalCost">Total Cost (€):</label>
+                    <InputNumber id="totalCost" class="form-control" @bind-Value="bookingModel.TotalCost" />
+                    <ValidationMessage For="@(() => bookingModel.TotalCost)" />
+                    <small class="form-text text-muted">Calculate based on duration: @CalculateDuration() day(s)</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="specialRequirements">Special Requirements:</label>
+                    <InputTextArea id="specialRequirements" class="form-control" @bind-Value="bookingModel.SpecialRequirements" rows="4" />
+                    <ValidationMessage For="@(() => bookingModel.SpecialRequirements)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Create Booking
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+            </EditForm>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Booking Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Check kennel availability before booking</li>
+                    <li>Ensure check-out date is after check-in date</li>
+                    <li>Include any special requirements for the dog</li>
+                    <li>Standard rate: €50 per day</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private BookingFormModel bookingModel = new();
+    private List<DogDto> dogs = new();
+    private List<KennelDto> kennels = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+    private bool isLoadingData = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoadingData = true;
+            var dogsTask = ApiService.GetDogsAsync();
+            var kennelsTask = ApiService.GetKennelsAsync();
+
+            await Task.WhenAll(dogsTask, kennelsTask);
+
+            dogs = await dogsTask;
+            kennels = await kennelsTask;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingData = false;
+        }
+    }
+
+    private int CalculateDuration()
+    {
+        if (bookingModel.CheckOutDate > bookingModel.CheckInDate)
+        {
+            return (bookingModel.CheckOutDate - bookingModel.CheckInDate).Days;
+        }
+        return 0;
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            if (bookingModel.CheckOutDate <= bookingModel.CheckInDate)
+            {
+                errorMessage = "Check-out date must be after check-in date.";
+                return;
+            }
+
+            var result = await ApiService.CreateBookingAsync(bookingModel);
+            if (result != null)
+            {
+                Navigation.NavigateTo("/bookings");
+            }
+            else
+            {
+                errorMessage = "Failed to create booking. The kennel may not be available for the selected dates.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error creating booking: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/bookings");
+    }
+}

@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/customers/view/{id:int}"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Customer Details - Kennel Management</PageTitle>
+
+<h1>Customer Details</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (customer != null)
+{
+    <div class="card">
+        <div class="card-header">
+            <h3>@customer.FirstName @customer.LastName</h3>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Email:</dt>
+                <dd class="col-sm-9">@customer.Email</dd>
+
+                <dt class="col-sm-3">Phone Number:</dt>
+                <dd class="col-sm-9">@customer.PhoneNumber</dd>
+
+                <dt class="col-sm-3">Address:</dt>
+                <dd class="col-sm-9">@customer.Address</dd>
+
+                <dt class="col-sm-3">Created:</dt>
+                <dd class="col-sm-9">@customer.CreatedAt.ToString("F")</dd>
+            </dl>
+
+            <AuthorizeView Roles="Admin,Staff">
+                <button class="btn btn-warning" @onclick="NavigateToEdit">
+                    <span class="oi oi-pencil"></span> Edit
+                </button>
+            </AuthorizeView>
+            <button class="btn btn-secondary" @onclick="GoBack">
+                <span class="oi oi-arrow-left"></span> Back
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Customer not found.</div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private CustomerDto? customer;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomer();
+    }
+
+    private async Task LoadCustomer()
+    {
+        try
+        {
+            isLoading = true;
+            customer = await ApiService.GetCustomerAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading customer: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToEdit()
+    {
+        Navigation.NavigateTo($"/customers/edit/{Id}");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/customers");
+    }
+}

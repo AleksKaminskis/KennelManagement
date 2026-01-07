@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/kennels/create"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Kennel - Kennel Management</PageTitle>
+
+<h1>Create Kennel</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <EditForm Model="@kennelModel" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group mb-3">
+                <label for="kennelNumber">Kennel Number:</label>
+                <InputText id="kennelNumber" class="form-control" @bind-Value="kennelModel.KennelNumber" />
+                <ValidationMessage For="@(() => kennelModel.KennelNumber)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="size">Size:</label>
+                <InputSelect id="size" class="form-control" @bind-Value="kennelModel.Size">
+                    <option value="">-- Select Size --</option>
+                    <option value="Small">Small</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Large">Large</option>
+                    <option value="Extra Large">Extra Large</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => kennelModel.Size)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="notes">Notes:</label>
+                <InputTextArea id="notes" class="form-control" @bind-Value="kennelModel.Notes" rows="3" />
+                <ValidationMessage For="@(() => kennelModel.Notes)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Create Kennel
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private KennelFormModel kennelModel = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var result = await ApiService.CreateKennelAsync(kennelModel);
+            if (result != null)
+            {
+                Navigation.NavigateTo("/kennels");
+            }
+            else
+            {
+                errorMessage = "Failed to create kennel.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error creating kennel: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/kennels");
+    }
+}

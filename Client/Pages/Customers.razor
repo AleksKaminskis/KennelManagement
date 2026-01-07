@@ -1,0 +1,155 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/customers"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Customers - Kennel Management</PageTitle>
+
+<h1>Customers</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <AuthorizeView Roles="Admin,Staff">
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="NavigateToCreate">
+                <span class="oi oi-plus"></span> Add New Customer
+            </button>
+        </div>
+    </AuthorizeView>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (customers.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in customers)
+                    {
+                        <tr>
+                            <td>@customer.FirstName @customer.LastName</td>
+                            <td>@customer.Email</td>
+                            <td>@customer.PhoneNumber</td>
+                            <td>@customer.Address</td>
+                            <td>@customer.CreatedAt.ToShortDateString()</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => NavigateToView(customer.Id)">
+                                    <span class="oi oi-eye"></span> View
+                                </button>
+                                <AuthorizeView Roles="Admin,Staff">
+                                    <button class="btn btn-sm btn-warning" @onclick="() => NavigateToEdit(customer.Id)">
+                                        <span class="oi oi-pencil"></span> Edit
+                                    </button>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteCustomer(customer.Id)">
+                                        <span class="oi oi-trash"></span> Delete
+                                    </button>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No customers found.</div>
+    }
+}
+
+@code {
+    private List<CustomerDto> customers = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomers();
+    }
+
+    private async Task LoadCustomers()
+    {
+        try
+        {
+            isLoading = true;
+            customers = await ApiService.GetCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading customers: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/customers/create");
+    }
+
+    private void NavigateToView(int id)
+    {
+        Navigation.NavigateTo($"/customers/view/{id}");
+    }
+
+    private void NavigateToEdit(int id)
+    {
+        Navigation.NavigateTo($"/customers/edit/{id}");
+    }
+
+    private async Task DeleteCustomer(int id)
+    {
+        if (confirm($"Are you sure you want to delete this customer?"))
+        {
+            try
+            {
+                var success = await ApiService.DeleteCustomerAsync(id);
+                if (success)
+                {
+                    await LoadCustomers();
+                }
+                else
+                {
+                    errorMessage = "Failed to delete customer.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting customer: {ex.Message}";
+            }
+        }
+    }
+
+    private bool confirm(string message)
+    {
+        // In a real application, you would use JavaScript interop for confirmation
+        return true;
+    }
+}
