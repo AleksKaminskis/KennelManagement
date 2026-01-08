@@ -1,0 +1,172 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/kennels"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Kennels - Kennel Management</PageTitle>
+
+<h1>Kennels</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <AuthorizeView Roles="Admin,Staff">
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="NavigateToCreate">
+                <span class="oi oi-plus"></span> Add New Kennel
+            </button>
+        </div>
+    </AuthorizeView>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (kennels.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Kennel Number</th>
+                        <th>Size</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var kennel in kennels)
+                    {
+                        <tr>
+                            <td><strong>@kennel.KennelNumber</strong></td>
+                            <td>@kennel.Size</td>
+                            <td>
+                                @if (kennel.IsOccupied)
+                                {
+                                    <span class="badge bg-danger">Occupied</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                            </td>
+                            <td>@kennel.Notes</td>
+                            <td>@kennel.CreatedAt.ToShortDateString()</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => NavigateToView(kennel.Id)">
+                                    <span class="oi oi-eye"></span> View
+                                </button>
+                                <AuthorizeView Roles="Admin,Staff">
+                                    <button class="btn btn-sm btn-warning" @onclick="() => NavigateToEdit(kennel.Id)">
+                                        <span class="oi oi-pencil"></span> Edit
+                                    </button>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteKennel(kennel.Id)">
+                                        <span class="oi oi-trash"></span> Delete
+                                    </button>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h4>Kennel Availability Summary</h4>
+                <p>Total Kennels: <strong>@kennels.Count</strong></p>
+                <p>Available: <strong class="text-success">@kennels.Count(k => !k.IsOccupied)</strong></p>
+                <p>Occupied: <strong class="text-danger">@kennels.Count(k => k.IsOccupied)</strong></p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No kennels found.</div>
+    }
+}
+
+@code {
+    private List<KennelDto> kennels = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKennels();
+    }
+
+    private async Task LoadKennels()
+    {
+        try
+        {
+            isLoading = true;
+            kennels = await ApiService.GetKennelsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading kennels: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/kennels/create");
+    }
+
+    private void NavigateToView(int id)
+    {
+        Navigation.NavigateTo($"/kennels/view/{id}");
+    }
+
+    private void NavigateToEdit(int id)
+    {
+        Navigation.NavigateTo($"/kennels/edit/{id}");
+    }
+
+    private async Task DeleteKennel(int id)
+    {
+        if (confirm($"Are you sure you want to delete this kennel?"))
+        {
+            try
+            {
+                var success = await ApiService.DeleteKennelAsync(id);
+                if (success)
+                {
+                    await LoadKennels();
+                }
+                else
+                {
+                    errorMessage = "Failed to delete kennel.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting kennel: {ex.Message}";
+            }
+        }
+    }
+
+    private bool confirm(string message)
+    {
+        return true;
+    }
+}

@@ -1,0 +1,154 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/kennels/edit/{id:int}"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Kennel - Kennel Management</PageTitle>
+
+<h1>Edit Kennel</h1>
+
+@if (isLoadingKennel)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (kennelModel != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <EditForm Model="@kennelModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-3">
+                    <label for="kennelNumber">Kennel Number:</label>
+                    <InputText id="kennelNumber" class="form-control" @bind-Value="kennelModel.KennelNumber" />
+                    <ValidationMessage For="@(() => kennelModel.KennelNumber)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="size">Size:</label>
+                    <InputSelect id="size" class="form-control" @bind-Value="kennelModel.Size">
+                        <option value="">-- Select Size --</option>
+                        <option value="Small">Small</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Large">Large</option>
+                        <option value="Extra Large">Extra Large</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => kennelModel.Size)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>
+                        <InputCheckbox @bind-Value="kennelModel.IsOccupied" />
+                        Is Occupied
+                    </label>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="notes">Notes:</label>
+                    <InputTextArea id="notes" class="form-control" @bind-Value="kennelModel.Notes" rows="3" />
+                    <ValidationMessage For="@(() => kennelModel.Notes)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Update Kennel
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Kennel not found.</div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private KennelFormModel? kennelModel;
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+    private bool isLoadingKennel = true;
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKennel();
+    }
+
+    private async Task LoadKennel()
+    {
+        try
+        {
+            isLoadingKennel = true;
+            var kennel = await ApiService.GetKennelAsync(Id);
+            if (kennel != null)
+            {
+                kennelModel = new KennelFormModel
+                {
+                    KennelNumber = kennel.KennelNumber,
+                    Size = kennel.Size,
+                    IsOccupied = kennel.IsOccupied,
+                    Notes = kennel.Notes
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading kennel: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingKennel = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (kennelModel == null) return;
+
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var success = await ApiService.UpdateKennelAsync(Id, kennelModel);
+            if (success)
+            {
+                Navigation.NavigateTo("/kennels");
+            }
+            else
+            {
+                errorMessage = "Failed to update kennel.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating kennel: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/kennels");
+    }
+}

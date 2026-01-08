@@ -1,0 +1,158 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/dogs"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Dogs - Kennel Management</PageTitle>
+
+<h1>Dogs</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <AuthorizeView Roles="Admin,Staff">
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="NavigateToCreate">
+                <span class="oi oi-plus"></span> Add New Dog
+            </button>
+        </div>
+    </AuthorizeView>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (dogs.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Breed</th>
+                        <th>Age</th>
+                        <th>Color</th>
+                        <th>Weight (kg)</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dog in dogs)
+                    {
+                        <tr>
+                            <td>@dog.Name</td>
+                            <td>@dog.Breed</td>
+                            <td>@dog.Age years</td>
+                            <td>@dog.Color</td>
+                            <td>@dog.Weight kg</td>
+                            <td>@dog.CustomerName</td>
+                            <td>@dog.CreatedAt.ToShortDateString()</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => NavigateToView(dog.Id)">
+                                    <span class="oi oi-eye"></span> View
+                                </button>
+                                <AuthorizeView Roles="Admin,Staff">
+                                    <button class="btn btn-sm btn-warning" @onclick="() => NavigateToEdit(dog.Id)">
+                                        <span class="oi oi-pencil"></span> Edit
+                                    </button>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteDog(dog.Id)">
+                                        <span class="oi oi-trash"></span> Delete
+                                    </button>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No dogs found.</div>
+    }
+}
+
+@code {
+    private List<DogDto> dogs = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDogs();
+    }
+
+    private async Task LoadDogs()
+    {
+        try
+        {
+            isLoading = true;
+            dogs = await ApiService.GetDogsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading dogs: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/dogs/create");
+    }
+
+    private void NavigateToView(int id)
+    {
+        Navigation.NavigateTo($"/dogs/view/{id}");
+    }
+
+    private void NavigateToEdit(int id)
+    {
+        Navigation.NavigateTo($"/dogs/edit/{id}");
+    }
+
+    private async Task DeleteDog(int id)
+    {
+        if (confirm($"Are you sure you want to delete this dog?"))
+        {
+            try
+            {
+                var success = await ApiService.DeleteDogAsync(id);
+                if (success)
+                {
+                    await LoadDogs();
+                }
+                else
+                {
+                    errorMessage = "Failed to delete dog.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting dog: {ex.Message}";
+            }
+        }
+    }
+
+    private bool confirm(string message)
+    {
+        return true;
+    }
+}

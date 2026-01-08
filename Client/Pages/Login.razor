@@ -1,0 +1,147 @@
+﻿@page "/login"
+@inject IAuthService AuthService
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Login - Kennel Management</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Login</h3>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Error:</strong> @errorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(debugInfo))
+                {
+                    <div class="alert alert-info" role="alert">
+                        <strong>Debug Info:</strong> @debugInfo
+                    </div>
+                }
+
+                <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" />
+
+                    <div class="form-group mb-3">
+                        <label for="email">Email:</label>
+                        <InputText id="email" class="form-control" @bind-Value="loginModel.Email" placeholder="admin@kennel.com" />
+                        <ValidationMessage For="@(() => loginModel.Email)" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="password">Password:</label>
+                        <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" placeholder="Admin123!" />
+                        <ValidationMessage For="@(() => loginModel.Password)" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Logging in...</span>
+                        }
+                        else
+                        {
+                            <span>Login</span>
+                        }
+                    </button>
+                </EditForm>
+
+                <hr class="my-4" />
+
+                <div class="text-center">
+                    <p>Don't have an account? <a href="/register">Register here</a></p>
+                </div>
+
+                <div class="mt-4">
+                    <h5>Demo Accounts:</h5>
+                    <div class="list-group">
+                        <button type="button" class="list-group-item list-group-item-action" @onclick='() => QuickLogin("admin@kennel.com", "Admin123!")'>
+                            <strong>Admin:</strong> admin@kennel.com / Admin123!
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action" @onclick='() => QuickLogin("staff@kennel.com", "Staff123!")'>
+                            <strong>Staff:</strong> staff@kennel.com / Staff123!
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action" @onclick='() => QuickLogin("customer@kennel.com", "Customer123!")'>
+                            <strong>Customer:</strong> customer@kennel.com / Customer123!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string errorMessage = string.Empty;
+    private string debugInfo = string.Empty;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get API base address for debugging
+        try
+        {
+            var baseAddress = await JSRuntime.InvokeAsync<string>("eval", "document.baseURI");
+            debugInfo = $"Client Base: {baseAddress}";
+        }
+        catch { }
+    }
+
+    private async Task QuickLogin(string email, string password)
+    {
+        loginModel.Email = email;
+        loginModel.Password = password;
+        await HandleLogin();
+    }
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            Console.WriteLine($"Attempting login for: {loginModel.Email}");
+
+            var result = await AuthService.LoginAsync(loginModel);
+
+            if (result != null)
+            {
+                Console.WriteLine($"Login successful! Token received.");
+                AuthStateProvider.NotifyUserAuthentication(result.Token);
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Invalid email or password. Please check your credentials and try again.";
+                Console.WriteLine("Login failed - no result returned");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Cannot connect to the API server. Please ensure the API is running. Details: {ex.Message}";
+            Console.WriteLine($"HTTP Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Stack: {ex.StackTrace}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

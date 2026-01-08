@@ -1,0 +1,101 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/customers/create"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Customer - Kennel Management</PageTitle>
+
+<h1>Create Customer</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <EditForm Model="@customerModel" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group mb-3">
+                <label for="firstName">First Name:</label>
+                <InputText id="firstName" class="form-control" @bind-Value="customerModel.FirstName" />
+                <ValidationMessage For="@(() => customerModel.FirstName)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="lastName">Last Name:</label>
+                <InputText id="lastName" class="form-control" @bind-Value="customerModel.LastName" />
+                <ValidationMessage For="@(() => customerModel.LastName)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="email">Email:</label>
+                <InputText id="email" class="form-control" @bind-Value="customerModel.Email" />
+                <ValidationMessage For="@(() => customerModel.Email)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="phoneNumber">Phone Number:</label>
+                <InputText id="phoneNumber" class="form-control" @bind-Value="customerModel.PhoneNumber" />
+                <ValidationMessage For="@(() => customerModel.PhoneNumber)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="address">Address:</label>
+                <InputTextArea id="address" class="form-control" @bind-Value="customerModel.Address" rows="3" />
+                <ValidationMessage For="@(() => customerModel.Address)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Create Customer
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private CustomerFormModel customerModel = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var result = await ApiService.CreateCustomerAsync(customerModel);
+            if (result != null)
+            {
+                Navigation.NavigateTo("/customers");
+            }
+            else
+            {
+                errorMessage = "Failed to create customer.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error creating customer: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/customers");
+    }
+}

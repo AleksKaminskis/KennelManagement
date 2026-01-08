@@ -1,0 +1,194 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@page "/bookings"
+@attribute [Authorize]
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Bookings - Kennel Management</PageTitle>
+
+<h1>Bookings</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <AuthorizeView Roles="Admin,Staff">
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="NavigateToCreate">
+                <span class="oi oi-plus"></span> Create New Booking
+            </button>
+        </div>
+    </AuthorizeView>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (bookings.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Dog</th>
+                        <th>Kennel</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Status</th>
+                        <th>Total Cost</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var booking in bookings)
+                    {
+                        <tr>
+                            <td><strong>#@booking.Id</strong></td>
+                            <td>@booking.DogName</td>
+                            <td>@booking.KennelNumber</td>
+                            <td>@booking.CheckInDate.ToShortDateString()</td>
+                            <td>@booking.CheckOutDate.ToShortDateString()</td>
+                            <td>
+                                @if (booking.Status == "Confirmed")
+                                {
+                                    <span class="badge bg-success">@booking.Status</span>
+                                }
+                                else if (booking.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning">@booking.Status</span>
+                                }
+                                else if (booking.Status == "CheckedIn")
+                                {
+                                    <span class="badge bg-info">Checked In</span>
+                                }
+                                else if (booking.Status == "CheckedOut")
+                                {
+                                    <span class="badge bg-secondary">Checked Out</span>
+                                }
+                                else if (booking.Status == "Cancelled")
+                                {
+                                    <span class="badge bg-danger">@booking.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark">@booking.Status</span>
+                                }
+                            </td>
+                            <td>€@booking.TotalCost.ToString("F2")</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => NavigateToView(booking.Id)">
+                                    <span class="oi oi-eye"></span> View
+                                </button>
+                                <AuthorizeView Roles="Admin,Staff">
+                                    <button class="btn btn-sm btn-warning" @onclick="() => NavigateToEdit(booking.Id)">
+                                        <span class="oi oi-pencil"></span> Edit
+                                    </button>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteBooking(booking.Id)">
+                                        <span class="oi oi-trash"></span> Delete
+                                    </button>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h4>Booking Statistics</h4>
+                <p>Total Bookings: <strong>@bookings.Count</strong></p>
+                <p>Pending: <strong class="text-warning">@bookings.Count(b => b.Status == "Pending")</strong></p>
+                <p>Confirmed: <strong class="text-success">@bookings.Count(b => b.Status == "Confirmed")</strong></p>
+                <p>Checked In: <strong class="text-info">@bookings.Count(b => b.Status == "CheckedIn")</strong></p>
+                <p>Total Revenue: <strong class="text-primary">€@bookings.Sum(b => b.TotalCost).ToString("F2")</strong></p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No bookings found.</div>
+    }
+}
+
+@code {
+    private List<BookingDto> bookings = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBookings();
+    }
+
+    private async Task LoadBookings()
+    {
+        try
+        {
+            isLoading = true;
+            bookings = await ApiService.GetBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading bookings: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/bookings/create");
+    }
+
+    private void NavigateToView(int id)
+    {
+        Navigation.NavigateTo($"/bookings/view/{id}");
+    }
+
+    private void NavigateToEdit(int id)
+    {
+        Navigation.NavigateTo($"/bookings/edit/{id}");
+    }
+
+    private async Task DeleteBooking(int id)
+    {
+        if (confirm($"Are you sure you want to delete this booking?"))
+        {
+            try
+            {
+                var success = await ApiService.DeleteBookingAsync(id);
+                if (success)
+                {
+                    await LoadBookings();
+                }
+                else
+                {
+                    errorMessage = "Failed to delete booking.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting booking: {ex.Message}";
+            }
+        }
+    }
+
+    private bool confirm(string message)
+    {
+        return true;
+    }
+}

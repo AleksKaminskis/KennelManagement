@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  kennel-api:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    container_name: kennel-api
+    ports:
+      - "7000:80"
+      - "7001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=YourSecurePassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=${SQL_CONNECTION_STRING}
+      - UseInMemoryDatabase=${USE_IN_MEMORY_DB:-true}
+      - Jwt__Key=${JWT_KEY:-YourSuperSecretKeyThatIsAtLeast32CharactersLong!}
+      - Jwt__Issuer=Server
+      - Jwt__Audience=Client
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    networks:
+      - kennel-network
+
+  kennel-client:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    container_name: kennel-client
+    ports:
+      - "5000:80"
+    environment:
+      - ApiBaseAddress=https://kennel-api:443
+    depends_on:
+      - kennel-api
+    networks:
+      - kennel-network
+
+networks:
+  kennel-network:
+    driver: bridge
