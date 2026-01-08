@@ -11,8 +11,8 @@
     <main>
         <div class="top-row px-4">
             <AuthorizeView>
-                <Authorized>
-                    <span class="user-info">Welcome, @context.User.Identity?.Name</span>
+                <Authorized Context="mainAuth">
+                    <span class="user-info">Welcome, @mainAuth.User.Identity?.Name</span>
                     <button class="btn btn-link" @onclick="Logout">Logout</button>
                 </Authorized>
                 <NotAuthorized>

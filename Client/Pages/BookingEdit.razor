@@ -114,10 +114,10 @@ else if (bookingModel != null)
                 </div>
                 <div class="card-body">
                     <p>Change booking status quickly:</p>
-                    <button class="btn btn-sm btn-success mb-2 w-100" @onclick="() => UpdateStatus('Confirmed')">Confirm</button>
-                    <button class="btn btn-sm btn-info mb-2 w-100" @onclick="() => UpdateStatus('CheckedIn')">Check In</button>
-                    <button class="btn btn-sm btn-secondary mb-2 w-100" @onclick="() => UpdateStatus('CheckedOut')">Check Out</button>
-                    <button class="btn btn-sm btn-danger mb-2 w-100" @onclick="() => UpdateStatus('Cancelled')">Cancel</button>
+                    <button class="btn btn-sm btn-success mb-2 w-100" @onclick='() => UpdateStatus("Confirmed")'>Confirm</button>
+                    <button class="btn btn-sm btn-info mb-2 w-100" @onclick='() => UpdateStatus("CheckedIn")'>Check In</button>
+                    <button class="btn btn-sm btn-secondary mb-2 w-100" @onclick='() => UpdateStatus("CheckedOut")'>Check Out</button>
+                    <button class="btn btn-sm btn-danger mb-2 w-100" @onclick='() => UpdateStatus("Cancelled")'>Cancel</button>
                 </div>
             </div>
         </div>

@@ -4,9 +4,9 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(AppLayout)">
+                <NotAuthorized Context="routeAuth">
+                    @if (routeAuth.User.Identity?.IsAuthenticated != true)
                     {
                         <RedirectToLogin />
                     }
@@ -20,7 +20,7 @@
         </Found>
         <NotFound>
             <PageTitle>Not found</PageTitle>
-            <LayoutView Layout="@typeof(MainLayout)">
+            <LayoutView Layout="@typeof(AppLayout)">
                 <p role="alert">Sorry, there's nothing at this address.</p>
             </LayoutView>
         </NotFound>
