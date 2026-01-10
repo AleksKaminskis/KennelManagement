@@ -45,6 +45,18 @@
                     </div>
 
                     <div class="form-group mb-3">
+                        <label for="phoneNumber">Phone Number:</label>
+                        <InputText id="phoneNumber" class="form-control" @bind-Value="registerModel.PhoneNumber" />
+                        <ValidationMessage For="@(() => registerModel.PhoneNumber)" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="address">Address:</label>
+                        <InputText id="address" class="form-control" @bind-Value="registerModel.Address" row="3" />
+                        <ValidationMessage For="@(() => registerModel.Address)" />
+                    </div>
+
+                    <div class="form-group mb-3">
                         <label for="password">Password:</label>
                         <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" />
                         <ValidationMessage For="@(() => registerModel.Password)" />

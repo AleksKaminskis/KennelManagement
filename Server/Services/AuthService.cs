@@ -33,6 +33,7 @@ namespace Server.Services
                 Email = registerDto.Email,
                 FirstName = registerDto.FirstName,
                 LastName = registerDto.LastName,
+                PhoneNumber = registerDto.PhoneNumber,
                 EmailConfirmed = true
             };
 
