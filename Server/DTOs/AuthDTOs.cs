@@ -13,14 +13,6 @@ namespace Server.DTOs
         public string LastName { get; set; } = string.Empty;
 
         [Required]
-        [Phone]
-        [StringLength(20)]
-        public string PhoneNumber { get; set; } = string.Empty;
-
-        [StringLength(500)]
-        public string Address { get; set; } = string.Empty;
-
-        [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
@@ -30,6 +22,14 @@ namespace Server.DTOs
 
         [Required]
         public string Role { get; set; } = "Customer"; // Admin, Staff, Customer
+
+        // Optional fields for Customer role
+        [Phone]
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        [StringLength(500)]
+        public string? Address { get; set; }
     }
 
     public class LoginDto

@@ -5,21 +5,16 @@ namespace Client.Models
     public class RegisterModel
     {
         [Required(ErrorMessage = "First name is required")]
+        [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Last name is required")]
+        [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Phone number is required")]
-        [Phone(ErrorMessage = "Invalid phone number")]
-        public string PhoneNumber { get; set; } = string.Empty;
-
-        [StringLength(500)]
-        public string Address { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
@@ -31,6 +26,14 @@ namespace Client.Models
 
         [Required(ErrorMessage = "Role is required")]
         public string Role { get; set; } = "Customer";
+
+        // Optional fields for Customer role
+        [Phone(ErrorMessage = "Invalid phone number")]
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        [StringLength(500)]
+        public string? Address { get; set; }
     }
 
     public class LoginModel
