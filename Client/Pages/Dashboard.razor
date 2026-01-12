@@ -1,0 +1,110 @@
+@using Microsoft.AspNetCore.Authorization
+
+@page "/dashboard"
+@attribute [Authorize(Roles = "Admin,Staff")]
+@inject ApiService ApiService
+@inject RefreshService RefreshService
+
+<PageTitle>Dashboard - Kennel Management</PageTitle>
+
+<h1>Dashboard</h1>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Dogs</h5>
+                    <p>Total dogs: <strong>@totalDogs</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Kennels</h5>
+                    <p>Total kennels: <strong>@totalKennels</strong></p>
+                    <p>Occupied: <strong class="text-danger">@occupiedKennels</strong></p>
+                    <p>Available: <strong class="text-success">@availableKennels</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Bookings</h5>
+                    <p>Total bookings: <strong>@totalBookings</strong></p>
+                    <p>Checked in: <strong class="text-info">@checkedInBookings</strong></p>
+                    <p>Pending: <strong class="text-warning">@pendingBookings</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private int totalDogs = 0;
+    private int totalKennels = 0;
+    private int occupiedKennels = 0;
+    private int availableKennels = 0;
+    private int totalBookings = 0;
+    private int checkedInBookings = 0;
+    private int pendingBookings = 0;
+
+    private Func<Task>? refreshHandler;
+
+    protected override async Task OnInitializedAsync()
+    {
+        refreshHandler = async () => await LoadStats();
+        RefreshService.OnChange += refreshHandler;
+        await LoadStats();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (refreshHandler != null)
+        {
+            RefreshService.OnChange -= refreshHandler;
+        }
+    }
+
+    private async Task LoadStats()
+    {
+        try
+        {
+            isLoading = true;
+
+            var dogs = await ApiService.GetDogsAsync();
+            var kennels = await ApiService.GetKennelsAsync();
+            var bookings = await ApiService.GetBookingsAsync();
+
+            totalDogs = dogs.Count;
+            totalKennels = kennels.Count;
+            occupiedKennels = kennels.Count(k => k.IsOccupied);
+            availableKennels = totalKennels - occupiedKennels;
+
+            totalBookings = bookings.Count;
+            checkedInBookings = bookings.Count(b => b.Status == "CheckedIn");
+            pendingBookings = bookings.Count(b => b.Status == "Pending");
+        }
+        catch
+        {
+            // ignore for brevity
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
