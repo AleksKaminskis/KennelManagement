@@ -6,10 +6,12 @@ namespace Client.Services
     public class ApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly RefreshService _refreshService;
 
-        public ApiService(HttpClient httpClient)
+        public ApiService(HttpClient httpClient, RefreshService refreshService)
         {
             _httpClient = httpClient;
+            _refreshService = refreshService;
         }
 
         // Customer methods
@@ -89,18 +91,31 @@ namespace Client.Services
         public async Task<KennelDto?> CreateKennelAsync(KennelFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/kennels", model);
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<KennelDto>() : null;
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+                return await response.Content.ReadFromJsonAsync<KennelDto>();
+            }
+            return null;
         }
 
         public async Task<bool> UpdateKennelAsync(int id, KennelFormModel model)
         {
             var response = await _httpClient.PutAsJsonAsync($"api/kennels/{id}", model);
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+            }
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteKennelAsync(int id)
         {
             var response = await _httpClient.DeleteAsync($"api/kennels/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+            }
             return response.IsSuccessStatusCode;
         }
 
@@ -118,7 +133,12 @@ namespace Client.Services
         public async Task<BookingDto?> CreateBookingAsync(BookingFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/bookings", model);
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<BookingDto>() : null;
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+                return await response.Content.ReadFromJsonAsync<BookingDto>();
+            }
+            return null;
         }
 
         public async Task<bool> UpdateBookingAsync(int id, BookingFormModel model)
@@ -135,18 +155,30 @@ namespace Client.Services
             };
 
             var response = await _httpClient.PutAsJsonAsync($"api/bookings/{id}", updateDto);
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+            }
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteBookingAsync(int id)
         {
             var response = await _httpClient.DeleteAsync($"api/bookings/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+            }
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> UpdateBookingStatusAsync(int id, string status)
         {
             var response = await _httpClient.PatchAsJsonAsync($"api/bookings/{id}/status", status);
+            if (response.IsSuccessStatusCode)
+            {
+                await _refreshService.NotifyAsync();
+            }
             return response.IsSuccessStatusCode;
         }
     }

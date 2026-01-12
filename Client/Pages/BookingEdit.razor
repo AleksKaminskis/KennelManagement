@@ -114,10 +114,10 @@ else if (bookingModel != null)
                 </div>
                 <div class="card-body">
                     <p>Change booking status quickly:</p>
-                    <button class="btn btn-sm btn-success mb-2 w-100" @onclick='() => UpdateStatus("Confirmed")'>Confirm</button>
-                    <button class="btn btn-sm btn-info mb-2 w-100" @onclick='() => UpdateStatus("CheckedIn")'>Check In</button>
-                    <button class="btn btn-sm btn-secondary mb-2 w-100" @onclick='() => UpdateStatus("CheckedOut")'>Check Out</button>
-                    <button class="btn btn-sm btn-danger mb-2 w-100" @onclick='() => UpdateStatus("Cancelled")'>Cancel</button>
+                    <button class="btn btn-sm btn-success mb-2 w-100" @onclick='() => UpdateStatus("Confirmed")' disabled="@isLoading">Confirm</button>
+                    <button class="btn btn-sm btn-info mb-2 w-100" @onclick='() => UpdateStatus("CheckedIn")' disabled="@isLoading">Check In</button>
+                    <button class="btn btn-sm btn-secondary mb-2 w-100" @onclick='() => UpdateStatus("CheckedOut")' disabled="@isLoading">Check Out</button>
+                    <button class="btn btn-sm btn-danger mb-2 w-100" @onclick='() => UpdateStatus("Cancelled")' disabled="@isLoading">Cancel</button>
                 </div>
             </div>
         </div>
@@ -242,11 +242,34 @@ else
         }
     }
 
-    private void UpdateStatus(string status)
+    private async Task UpdateStatus(string status)
     {
-        if (bookingModel != null)
+        if (bookingModel == null) return;
+
+        try
         {
-            bookingModel.Status = status;
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var success = await ApiService.UpdateBookingStatusAsync(Id, status);
+            if (success)
+            {
+                // Refresh booking and kennel data to reflect occupancy changes
+                await LoadBooking();
+                await LoadData();
+            }
+            else
+            {
+                errorMessage = "Failed to update booking status.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating status: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 

@@ -4,6 +4,7 @@
 @attribute [Authorize]
 @inject ApiService ApiService
 @inject NavigationManager Navigation
+@inject RefreshService RefreshService
 
 <PageTitle>Kennels - Kennel Management</PageTitle>
 
@@ -107,7 +108,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        RefreshService.OnChange += async () => await LoadKennels();
         await LoadKennels();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        RefreshService.OnChange -= async () => await LoadKennels();
     }
 
     private async Task LoadKennels()
@@ -124,6 +131,7 @@ else
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 

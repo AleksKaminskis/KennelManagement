@@ -36,5 +36,7 @@ builder.Services.AddScoped<CustomAuthenticationStateProvider>(provider =>
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ApiService>();
+// Add refresh service
+builder.Services.AddSingleton<RefreshService>();
 
 await builder.Build().RunAsync();
