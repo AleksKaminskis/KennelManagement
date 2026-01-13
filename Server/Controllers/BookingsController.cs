@@ -116,7 +116,7 @@ namespace Server.Controllers
                 // Check for overlapping bookings
                 var hasOverlap = await _context.Bookings
                     .AnyAsync(b => b.KennelId == createDto.KennelId &&
-                                 b.Status != "Cancelled" && b.Status != "Checked Out" &&
+                                 b.Status != "Cancelled" && b.Status != "CheckedOut" &&
                                  ((createDto.CheckInDate >= b.CheckInDate && createDto.CheckInDate < b.CheckOutDate) ||
                                   (createDto.CheckOutDate > b.CheckInDate && createDto.CheckOutDate <= b.CheckOutDate) ||
                                   (createDto.CheckInDate <= b.CheckInDate && createDto.CheckOutDate >= b.CheckOutDate)));
@@ -185,7 +185,7 @@ namespace Server.Controllers
                     var hasOverlap = await _context.Bookings
                         .AnyAsync(b => b.Id != id &&
                                      b.KennelId == updateDto.KennelId &&
-                                     b.Status != "Cancelled" && b.Status != "Checked Out" &&
+                                     b.Status != "Cancelled" && b.Status != "CheckedOut" &&
                                      ((updateDto.CheckInDate >= b.CheckInDate && updateDto.CheckInDate < b.CheckOutDate) ||
                                       (updateDto.CheckOutDate > b.CheckInDate && updateDto.CheckOutDate <= b.CheckOutDate) ||
                                       (updateDto.CheckInDate <= b.CheckInDate && updateDto.CheckOutDate >= b.CheckOutDate)));
@@ -214,24 +214,30 @@ namespace Server.Controllers
                     var oldKennel = await _context.Kennels.FindAsync(oldKennelId);
                     if (oldKennel != null)
                     {
+                        // Exclude the current booking when checking other checked-in bookings
                         oldKennel.IsOccupied = await _context.Bookings
-                            .AnyAsync(b => b.KennelId == oldKennelId && b.Status == "Checked In");
+                            .AnyAsync(b => b.Id != id && b.KennelId == oldKennelId && b.Status == "CheckedIn");
                     }
 
                     // Update new kennel
                     var newKennel = await _context.Kennels.FindAsync(updateDto.KennelId);
                     if (newKennel != null)
                     {
-                        newKennel.IsOccupied = updateDto.Status == "Checked In";
+                        // New kennel is occupied if this updated booking will be CheckedIn or any other booking is CheckedIn
+                        var otherCheckedIn = await _context.Bookings
+                            .AnyAsync(b => b.Id != id && b.KennelId == updateDto.KennelId && b.Status == "CheckedIn");
+                        newKennel.IsOccupied = updateDto.Status == "CheckedIn" || otherCheckedIn;
                     }
                 }
                 else
                 {
-                    // Same kennel, update based on status
+                    // Same kennel, update based on status and other bookings
                     var kennel = await _context.Kennels.FindAsync(booking.KennelId);
                     if (kennel != null)
                     {
-                        kennel.IsOccupied = updateDto.Status == "Checked In";
+                        var otherCheckedIn = await _context.Bookings
+                            .AnyAsync(b => b.Id != id && b.KennelId == booking.KennelId && b.Status == "CheckedIn");
+                        kennel.IsOccupied = updateDto.Status == "CheckedIn" || otherCheckedIn;
                     }
                 }
 
@@ -283,6 +289,25 @@ namespace Server.Controllers
 
                 booking.Status = status;
                 booking.UpdatedAt = DateTime.UtcNow;
+
+                // Update kennel occupancy based on new status
+                var kennel = await _context.Kennels.FindAsync(booking.KennelId);
+                if (kennel != null)
+                {
+                    if (status == "CheckedIn")
+                    {
+                        // Mark kennel occupied
+                        kennel.IsOccupied = true;
+                    }
+                    else
+                    {
+                        // If status is no longer CheckedIn, check if any other booking still has CheckedIn for this kennel
+                        var otherCheckedIn = await _context.Bookings
+                            .AnyAsync(b => b.KennelId == booking.KennelId && b.Id != id && b.Status == "CheckedIn");
+
+                        kennel.IsOccupied = otherCheckedIn;
+                    }
+                }
 
                 await _context.SaveChangesAsync();
 

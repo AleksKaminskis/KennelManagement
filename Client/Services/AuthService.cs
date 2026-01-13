@@ -53,6 +53,8 @@ namespace Client.Services
                     model.FirstName,
                     model.LastName,
                     model.Email,
+                    model.PhoneNumber,
+                    model.Address,
                     model.Password,
                     model.Role
                 };

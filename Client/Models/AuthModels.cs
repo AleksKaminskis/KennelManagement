@@ -5,9 +5,11 @@ namespace Client.Models
     public class RegisterModel
     {
         [Required(ErrorMessage = "First name is required")]
+        [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Last name is required")]
+        [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required")]
@@ -24,6 +26,14 @@ namespace Client.Models
 
         [Required(ErrorMessage = "Role is required")]
         public string Role { get; set; } = "Customer";
+
+        // Optional fields for Customer role
+        [Phone(ErrorMessage = "Invalid phone number")]
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        [StringLength(500)]
+        public string? Address { get; set; }
     }
 
     public class LoginModel

@@ -13,17 +13,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var apiBaseAddress = builder.Configuration["ApiBaseAddress"] ?? "https://localhost:7000";
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseAddress) });
 
-// Ensure the base address ends with /
-if (!apiBaseAddress.EndsWith("/"))
-{
-    apiBaseAddress += "/";
-}
-
-builder.Services.AddScoped(sp => new HttpClient
-{
-    BaseAddress = new Uri(apiBaseAddress)
-});
-
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
@@ -36,5 +25,7 @@ builder.Services.AddScoped<CustomAuthenticationStateProvider>(provider =>
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ApiService>();
+// Add refresh service
+builder.Services.AddSingleton<RefreshService>();
 
 await builder.Build().RunAsync();
