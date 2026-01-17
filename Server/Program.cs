@@ -1,3 +1,5 @@
+using Azure;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +11,12 @@ using Server.Middleware;
 using Server.Models;
 using Server.Services;
 using System.Text;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri")!);
+builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -76,9 +82,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "KennelManagementAPI";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "KennelManagementClient";
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
+var jwtAudience = builder.Configuration["Jwt:Audience"]!;
+
 
 builder.Services.AddAuthentication(options =>
 {
