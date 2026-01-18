@@ -2,5 +2,6 @@
   <Project Path="Client/Client.csproj">
     <BuildDependency Project="Server/Server.csproj" />
   </Project>
+  <Project Path="Server.Tests/Server.Tests.csproj" />
   <Project Path="Server/Server.csproj" />
 </Solution>
