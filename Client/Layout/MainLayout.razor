@@ -3,28 +3,61 @@
 @inject IAuthService AuthService
 @inject CustomAuthenticationStateProvider AuthStateProvider
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <AuthorizeView>
-                <Authorized Context="mainAuth">
-                    <span class="user-info">Welcome, @mainAuth.User.Identity?.Name</span>
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-3">
+    <AuthorizeView>
+        <Authorized Context="mainAuth">
+            <div class="container">
+                <a class="navbar-brand" href="/">Kennel Management System</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="/">
+                                <span class="oi mr-1" aria-hidden="true"></span>Home
+                            </a>
+                        </li>
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="customers">
+                                <span class="oi mr-1" aria-hidden="true"></span>Customers
+                            </a>
+                        </li>
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="dogs">
+                                <span class="oi mr-1" aria-hidden="true"></span>Dogs
+                            </a>
+                        </li>
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="kennels">
+                                <span class="oi mr-1" aria-hidden="true"></span>Kennels
+                            </a>
+                        </li>
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="bookings">
+                                <span class="oi mr-1" aria-hidden="true"></span>Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item px-3">
+                            <a class="nav-link" href="dashboard">
+                                <span class="oi mr-1" aria-hidden="true"></span>Dashboard
+                            </a>
+                        </li>
+                    </ul>
                     <button class="btn btn-link" @onclick="Logout">Logout</button>
-                </Authorized>
-                <NotAuthorized>
-                    <a href="login">Login</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="container text-center">
+                <a class="navbar-brand text-center" href="/">Kennel Management System</a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+<div class="container" mb-3">
+    @Body
 </div>
 
 @code {
