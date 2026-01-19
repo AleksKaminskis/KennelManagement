@@ -46,7 +46,6 @@ jobs:
     - name: Azure Login
       uses: azure/login@v2
       with:
-        client-id: ${{ vars.kennel_management_api_CLIENT_ID_0373 }}
         tenant-id: ${{ vars.kennel_management_api_TENANT_ID_0373 }}
         subscription-id: ${{ vars.kennel_management_api_SUBSCRIPTION_ID_0373 }}
     - name: Deploy to Azure WebApp
