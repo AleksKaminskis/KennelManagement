@@ -5,7 +5,7 @@ on:
     - main
 
 env:
-  AZURE_WEBAPP_NAME: kennel-management-api
+  AZURE_WEBAPP_NAME: kennelca3
   AZURE_WEBAPP_PACKAGE_PATH: Server/publish
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
