@@ -54,7 +54,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configure Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var useInMemoryDatabase = string.IsNullOrEmpty(connectionString) ||
+var useInMemoryDatabase = builder.Environment.IsDevelopment() &&
                           builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
 if (useInMemoryDatabase)
@@ -64,8 +64,19 @@ if (useInMemoryDatabase)
 }
 else
 {
+    if (string.IsNullOrEmpty(connectionString))
+        throw new InvalidOperationException("SQL connection string is missing in Production.");
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
+}
+
+// Test the database connection in production
+
+if (builder.Environment.IsProduction())
+{
+    Console.WriteLine("Running in PRODUCTION");
+    Console.WriteLine($"Using SQL Server: {!string.IsNullOrEmpty(connectionString)}");
 }
 
 // Configure Identity
