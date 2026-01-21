@@ -26,10 +26,10 @@ namespace Server.DTOs
         // Optional fields for Customer role
         [Phone]
         [StringLength(20)]
-        public string? PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [StringLength(500)]
-        public string? Address { get; set; }
+        public string Address { get; set; } = string.Empty;
     }
 
     public class LoginDto
