@@ -3,6 +3,7 @@ using Client.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 
+
 namespace Client.Services;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
@@ -40,7 +41,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
                 new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty)
             };
 
-            if (user.Roles != null)
+            if (user.Roles != null && user.Roles.Count > 0)
             {
                 foreach (var role in user.Roles)
                 {

@@ -17,7 +17,7 @@ namespace Client.Services
             _localStorage = localStorage;
         }
 
-        public async Task<AuthResponse?> LoginAsync(LoginModel model)
+        public async Task<AuthResponse> LoginAsync(LoginModel model)
         {
             try
             {
@@ -46,7 +46,7 @@ namespace Client.Services
             }
         }
 
-        public async Task<AuthResponse?> RegisterAsync(RegisterModel model)
+        public async Task<AuthResponse> RegisterAsync(RegisterModel model)
         {
             try
             {
@@ -55,10 +55,10 @@ namespace Client.Services
                     model.FirstName,
                     model.LastName,
                     model.Email,
-                    model.PhoneNumber,
-                    model.Address,
                     model.Password,
-                    model.Role
+                    model.Role,
+                    PhoneNumber = string.IsNullOrEmpty(model.PhoneNumber) ? "" : model.PhoneNumber,
+                    Address = string.IsNullOrEmpty(model.Address) ? "" : model.Address
                 };
 
                 var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerDto);
@@ -99,7 +99,7 @@ namespace Client.Services
             }
         }
 
-        public async Task<string?> GetTokenAsync()
+        public async Task<string> GetTokenAsync()
         {
             try
             {

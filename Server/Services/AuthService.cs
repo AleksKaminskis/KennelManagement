@@ -30,7 +30,7 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto)
+    public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
     {
         try
         {
@@ -121,7 +121,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
+    public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
         try
         {

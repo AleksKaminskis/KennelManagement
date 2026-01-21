@@ -27,28 +27,13 @@ Console.WriteLine($"API Base Address: {apiBaseAddress}");
 Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
 Console.WriteLine($"========================================");
 
-// Configure JSON serialization options to avoid nullable reference type issues
-var jsonOptions = new JsonSerializerOptions
+builder.Services.AddScoped(sp => new HttpClient
 {
-    PropertyNameCaseInsensitive = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    // This is the key fix for the NullabilityInfoContext error
-    TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
-};
-
-builder.Services.AddScoped(sp =>
-{
-    var httpClient = new HttpClient { BaseAddress = new Uri(apiBaseAddress) };
-    return httpClient;
+    BaseAddress = new Uri(apiBaseAddress)
 });
 
-// Add Blazored LocalStorage with JSON options
-builder.Services.AddBlazoredLocalStorage(config =>
-{
-    config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    config.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
-});
+// Add Blazored LocalStorage - simple configuration
+builder.Services.AddBlazoredLocalStorage();
 
 // Add Authentication
 builder.Services.AddAuthorizationCore();
