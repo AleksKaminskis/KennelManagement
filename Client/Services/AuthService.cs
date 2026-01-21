@@ -30,6 +30,7 @@ namespace Client.Services
                     {
                         await _localStorage.SetItemAsync(TokenKey, authResponse.Token);
                         await _localStorage.SetItemAsync(UserKey, authResponse);
+
                         _httpClient.DefaultRequestHeaders.Authorization =
                             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResponse.Token);
                     }
@@ -38,8 +39,9 @@ namespace Client.Services
 
                 return null;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Login error: {ex.Message}");
                 return null;
             }
         }
@@ -68,6 +70,7 @@ namespace Client.Services
                     {
                         await _localStorage.SetItemAsync(TokenKey, authResponse.Token);
                         await _localStorage.SetItemAsync(UserKey, authResponse);
+                        
                         _httpClient.DefaultRequestHeaders.Authorization =
                             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResponse.Token);
                     }
@@ -75,6 +78,32 @@ namespace Client.Services
                 }
 
                 return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Registration error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> IsAuthenticatedAsync()
+        {
+            try
+            {
+                var token = await _localStorage.GetItemAsStringAsync(TokenKey);
+                return !string.IsNullOrEmpty(token);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<string?> GetTokenAsync()
+        {
+            try
+            {
+                return await _localStorage.GetItemAsStringAsync(TokenKey);
             }
             catch
             {
@@ -87,17 +116,6 @@ namespace Client.Services
             await _localStorage.RemoveItemAsync(TokenKey);
             await _localStorage.RemoveItemAsync(UserKey);
             _httpClient.DefaultRequestHeaders.Authorization = null;
-        }
-
-        public async Task<bool> IsAuthenticatedAsync()
-        {
-            var token = await _localStorage.GetItemAsync<string>(TokenKey);
-            return !string.IsNullOrEmpty(token);
-        }
-
-        public async Task<string?> GetTokenAsync()
-        {
-            return await _localStorage.GetItemAsync<string>(TokenKey);
         }
     }
 }

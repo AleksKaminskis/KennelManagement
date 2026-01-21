@@ -3,22 +3,24 @@ using Client.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 
-namespace Client.Services
+namespace Client.Services;
+
+public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    public class CustomAuthenticationStateProvider : AuthenticationStateProvider
+    private readonly ILocalStorageService _localStorage;
+    private readonly HttpClient _httpClient;
+
+    public CustomAuthenticationStateProvider(ILocalStorageService localStorage, HttpClient httpClient)
     {
-        private readonly ILocalStorageService _localStorage;
-        private readonly HttpClient _httpClient;
+        _localStorage = localStorage;
+        _httpClient = httpClient;
+    }
 
-        public CustomAuthenticationStateProvider(ILocalStorageService localStorage, HttpClient httpClient)
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+        try
         {
-            _localStorage = localStorage;
-            _httpClient = httpClient;
-        }
-
-        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-        {
-            var token = await _localStorage.GetItemAsync<string>("authToken");
+            var token = await _localStorage.GetItemAsStringAsync("authToken");
 
             if (string.IsNullOrEmpty(token))
             {
@@ -32,15 +34,18 @@ namespace Client.Services
             }
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.GivenName, user.FirstName),
-            new Claim(ClaimTypes.Surname, user.LastName)
-        };
-
-            foreach (var role in user.Roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
+                new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty)
+            };
+
+            if (user.Roles != null)
+            {
+                foreach (var role in user.Roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
             }
 
             var identity = new ClaimsIdentity(claims, "jwt");
@@ -51,19 +56,24 @@ namespace Client.Services
 
             return new AuthenticationState(claimsPrincipal);
         }
-
-        public void NotifyUserAuthentication(string token)
+        catch (Exception ex)
         {
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, token) }, "jwt"));
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
-            NotifyAuthenticationStateChanged(authState);
+            Console.WriteLine($"Authentication state error: {ex.Message}");
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
+    }
 
-        public void NotifyUserLogout()
-        {
-            var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
-            var authState = Task.FromResult(new AuthenticationState(anonymousUser));
-            NotifyAuthenticationStateChanged(authState);
-        }
+    public void NotifyUserAuthentication(string token)
+    {
+        var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, token) }, "jwt"));
+        var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+        NotifyAuthenticationStateChanged(authState);
+    }
+
+    public void NotifyUserLogout()
+    {
+        var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
+        var authState = Task.FromResult(new AuthenticationState(anonymousUser));
+        NotifyAuthenticationStateChanged(authState);
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -26,10 +27,28 @@ Console.WriteLine($"API Base Address: {apiBaseAddress}");
 Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
 Console.WriteLine($"========================================");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseAddress) });
+// Configure JSON serialization options to avoid nullable reference type issues
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    // This is the key fix for the NullabilityInfoContext error
+    TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
+};
 
-// Add Blazored LocalStorage
-builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped(sp =>
+{
+    var httpClient = new HttpClient { BaseAddress = new Uri(apiBaseAddress) };
+    return httpClient;
+});
+
+// Add Blazored LocalStorage with JSON options
+builder.Services.AddBlazoredLocalStorage(config =>
+{
+    config.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    config.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
+});
 
 // Add Authentication
 builder.Services.AddAuthorizationCore();
@@ -40,15 +59,8 @@ builder.Services.AddScoped<CustomAuthenticationStateProvider>(provider =>
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ApiService>();
+
 // Add refresh service
 builder.Services.AddSingleton<RefreshService>();
-
-// Use the source-generated context as the primary resolver.
-// On WebAssembly the DefaultJsonTypeInfoResolver may call NullabilityInfoContext
-// which throws in this runtime. Assign the source-generated resolver directly to avoid it.
-builder.Services.Configure<JsonSerializerOptions>(options =>
-{
-    options.TypeInfoResolver = ClientJsonContext.Default;
-});
 
 await builder.Build().RunAsync();
