@@ -65,7 +65,7 @@
     private async Task Logout()
     {
         await AuthService.LogoutAsync();
-        AuthStateProvider.NotifyUserLogout();
+        // AuthService already calls NotifyUserLogout() on the auth provider
         Navigation.NavigateTo("/login");
     }
 }

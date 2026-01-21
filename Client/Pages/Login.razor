@@ -114,8 +114,8 @@
             if (result != null)
             {
                 Console.WriteLine($"Login successful! Token received.");
-                AuthStateProvider.NotifyUserAuthentication(result.Token);
-                Navigation.NavigateTo("/", forceLoad: true);
+                // AuthService now handles notifying the authentication state provider
+                Navigation.NavigateTo("/", forceLoad: false);
             }
             else
             {

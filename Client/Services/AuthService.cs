@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Client.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 
 namespace Client.Services
@@ -8,13 +9,15 @@ namespace Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
         private const string TokenKey = "authToken";
         private const string UserKey = "authUser";
 
-        public AuthService(HttpClient httpClient, ILocalStorageService localStorage)
+        public AuthService(HttpClient httpClient, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider)
         {
             _httpClient = httpClient;
             _localStorage = localStorage;
+            _authenticationStateProvider = authenticationStateProvider;
         }
 
         public async Task<AuthResponse> LoginAsync(LoginModel model)
@@ -33,6 +36,12 @@ namespace Client.Services
 
                         _httpClient.DefaultRequestHeaders.Authorization =
                             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResponse.Token);
+
+                        // Notify the authentication state provider
+                        if (_authenticationStateProvider is CustomAuthenticationStateProvider customProvider)
+                        {
+                            customProvider.NotifyUserAuthentication(authResponse);
+                        }
                     }
                     return authResponse;
                 }
@@ -73,6 +82,12 @@ namespace Client.Services
                         
                         _httpClient.DefaultRequestHeaders.Authorization =
                             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResponse.Token);
+
+                        // Notify the authentication state provider
+                        if (_authenticationStateProvider is CustomAuthenticationStateProvider customProvider)
+                        {
+                            customProvider.NotifyUserAuthentication(authResponse);
+                        }
                     }
                     return authResponse;
                 }
@@ -116,6 +131,12 @@ namespace Client.Services
             await _localStorage.RemoveItemAsync(TokenKey);
             await _localStorage.RemoveItemAsync(UserKey);
             _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            // Notify the authentication state provider
+            if (_authenticationStateProvider is CustomAuthenticationStateProvider customProvider)
+            {
+                customProvider.NotifyUserLogout();
+            }
         }
     }
 }

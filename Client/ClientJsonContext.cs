@@ -7,6 +7,8 @@ namespace Client
     [JsonSerializable(typeof(RegisterModel))]
     [JsonSerializable(typeof(LoginModel))]
     [JsonSerializable(typeof(AuthResponse))]
+    [JsonSerializable(typeof(List<string>))]
+    [JsonSerializable(typeof(object[]))]
     [JsonSerializable(typeof(BookingDto))]
     [JsonSerializable(typeof(BookingFormModel))]
     [JsonSerializable(typeof(CustomerDto))]

@@ -48,4 +48,10 @@ builder.Services.AddScoped<ApiService>();
 // Add refresh service
 builder.Services.AddSingleton<RefreshService>();
 
+// Configure JSON serializer - use source-generated context to avoid NullabilityInfoContext in WebAssembly
+builder.Services.Configure<JsonSerializerOptions>(options =>
+{
+    options.TypeInfoResolver = ClientJsonContext.Default;
+});
+
 await builder.Build().RunAsync();

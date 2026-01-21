@@ -165,9 +165,9 @@
                 successMessage = $"Registration successful! Welcome, {result.FirstName}! Redirecting to home...";
                 Console.WriteLine($"Registration successful for: {registerModel.Email}");
 
-                AuthStateProvider.NotifyUserAuthentication(result.Token);
+                // AuthService now handles notifying the authentication state provider
                 await Task.Delay(1500);
-                Navigation.NavigateTo("/", forceLoad: true);
+                Navigation.NavigateTo("/", forceLoad: false);
             }
             else
             {

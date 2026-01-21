@@ -64,10 +64,26 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
     }
 
-    public void NotifyUserAuthentication(string token)
+    public async void NotifyUserAuthentication(AuthResponse user)
     {
-        var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, token) }, "jwt"));
-        var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+            new Claim(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
+            new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty)
+        };
+
+        if (user.Roles != null && user.Roles.Count > 0)
+        {
+            foreach (var role in user.Roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
+
+        var identity = new ClaimsIdentity(claims, "jwt");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        var authState = Task.FromResult(new AuthenticationState(claimsPrincipal));
         NotifyAuthenticationStateChanged(authState);
     }
 
