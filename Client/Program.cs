@@ -42,9 +42,12 @@ builder.Services.AddScoped<ApiService>();
 // Add refresh service
 builder.Services.AddSingleton<RefreshService>();
 
+// Use the source-generated context as the primary resolver.
+// On WebAssembly the DefaultJsonTypeInfoResolver may call NullabilityInfoContext
+// which throws in this runtime. Assign the generated resolver directly to avoid it.
 builder.Services.Configure<JsonSerializerOptions>(options =>
 {
-    options.TypeInfoResolverChain.Insert(0, ClientJsonContext.Default);
+    options.TypeInfoResolver = ClientJsonContext.Default;
 });
 
 await builder.Build().RunAsync();
