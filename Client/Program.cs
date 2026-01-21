@@ -4,6 +4,7 @@ using Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using System.Text.Json;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -40,5 +41,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ApiService>();
 // Add refresh service
 builder.Services.AddSingleton<RefreshService>();
+
+builder.Services.Configure<JsonSerializerOptions>(options =>
+{
+    options.TypeInfoResolverChain.Insert(0, ClientJsonContext.Default);
+});
 
 await builder.Build().RunAsync();
