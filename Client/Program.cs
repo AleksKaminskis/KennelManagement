@@ -11,6 +11,19 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Configure HttpClient
 var apiBaseAddress = builder.Configuration["ApiBaseAddress"] ?? "https://localhost:7000";
+
+// Ensure the base address ends with /
+if (!apiBaseAddress.EndsWith("/"))
+{
+    apiBaseAddress += "/";
+}
+
+Console.WriteLine($"========================================");
+Console.WriteLine($"Kennel Management Client Starting");
+Console.WriteLine($"API Base Address: {apiBaseAddress}");
+Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
+Console.WriteLine($"========================================");
+
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseAddress) });
 
 // Add Blazored LocalStorage

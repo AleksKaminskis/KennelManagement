@@ -15,8 +15,28 @@ using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri")!);
-builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
+// Configure Azure Key Vault
+var keyVaultEndpoint = builder.Configuration["KeyVaultEndpoint"];
+if (!string.IsNullOrEmpty(keyVaultEndpoint))
+{
+    try
+    {
+        builder.Configuration.AddAzureKeyVault(
+            new Uri(keyVaultEndpoint),
+            new DefaultAzureCredential());
+
+        Console.WriteLine($"[+] Connected to Azure Key Vault: {keyVaultEndpoint}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[-] Failed to connect to Azure Key Vault: {ex.Message}");
+        Console.WriteLine("  Falling back to local configuration");
+    }
+}
+else
+{
+    Console.WriteLine("[!] KeyVaultEndpoint not configured. Using local configuration.");
+}
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -61,6 +81,8 @@ if (useInMemoryDatabase)
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseInMemoryDatabase("KennelManagementDb"));
+
+    Console.WriteLine("[!] Using In-Memory Database");
 }
 else
 {
@@ -68,7 +90,14 @@ else
         throw new InvalidOperationException("SQL connection string is missing in Production.");
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString));
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+            sqlOptions.CommandTimeout(60);
+        }));
 }
 
 // Test the database connection in production
@@ -123,6 +152,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Configure CORS
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+    ?? new[] { "https://localhost:5001", "http://localhost:5001" };
+
+Console.WriteLine($"[+] CORS Allowed Origins: {string.Join(", ", allowedOrigins)}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient", policy =>
@@ -143,6 +177,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+Console.WriteLine($"========================================");
+Console.WriteLine($"Kennel Management API Starting");
+Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
+Console.WriteLine($"========================================");
+
 // Seed database
 using (var scope = app.Services.CreateScope())
 {
@@ -156,18 +195,22 @@ using (var scope = app.Services.CreateScope())
         if (useInMemoryDatabase)
         {
             context.Database.EnsureCreated();
+            Console.WriteLine("[+] In-Memory database created");
         }
         else
         {
             context.Database.Migrate();
+            Console.WriteLine("[+] Database migrations applied");
         }
 
         await DbSeeder.SeedDataAsync(context, userManager, roleManager);
+        Console.WriteLine("[+] Database seeded with initial data");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while seeding the database.");
+        Console.WriteLine($"[-] Database initialization failed: {ex.Message}");
     }
 }
 
@@ -176,6 +219,17 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Enable Swagger in production for Azure deployment testing
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Kennel Management API V1");
+        c.RoutePrefix = "swagger";
+    });
+    Console.WriteLine("[+] Swagger UI enabled at /swagger");
 }
 
 app.UseHttpsRedirection();
