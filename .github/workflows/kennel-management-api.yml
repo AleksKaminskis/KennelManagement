@@ -6,7 +6,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: kennelca3
-  AZURE_WEBAPP_PACKAGE_PATH: Server/publish
+  AZURE_WEBAPP_PACKAGE_PATH: ./Server/**
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
   WORKING_DIRECTORY: Server
@@ -31,7 +31,7 @@ jobs:
       run: dotnet test "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore --no-build --verbosity normal
     
     - name: Publish
-      run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore --no-build --output "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
+      run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore --no-build --output '"${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/publish'"
     
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
@@ -56,4 +56,4 @@ jobs:
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_KENNELMANAGEMENTAPI }}
-        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/publish'
