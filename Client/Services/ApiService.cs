@@ -18,12 +18,12 @@ namespace Client.Services
             return await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers") ?? new();
         }
 
-        public async Task<CustomerDto?> GetCustomerAsync(int id)
+        public async Task<CustomerDto> GetCustomerAsync(int id)
         {
             return await _httpClient.GetFromJsonAsync<CustomerDto>($"api/customers/{id}");
         }
 
-        public async Task<CustomerDto?> CreateCustomerAsync(CustomerFormModel model)
+        public async Task<CustomerDto> CreateCustomerAsync(CustomerFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/customers", model);
             return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<CustomerDto>() : null;
@@ -47,12 +47,12 @@ namespace Client.Services
             return await _httpClient.GetFromJsonAsync<List<DogDto>>("api/dogs") ?? new();
         }
 
-        public async Task<DogDto?> GetDogAsync(int id)
+        public async Task<DogDto> GetDogAsync(int id)
         {
             return await _httpClient.GetFromJsonAsync<DogDto>($"api/dogs/{id}");
         }
 
-        public async Task<DogDto?> CreateDogAsync(DogFormModel model)
+        public async Task<DogDto> CreateDogAsync(DogFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/dogs", model);
             return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<DogDto>() : null;
@@ -81,12 +81,12 @@ namespace Client.Services
             return await _httpClient.GetFromJsonAsync<List<KennelDto>>("api/kennels/available") ?? new();
         }
 
-        public async Task<KennelDto?> GetKennelAsync(int id)
+        public async Task<KennelDto> GetKennelAsync(int id)
         {
             return await _httpClient.GetFromJsonAsync<KennelDto>($"api/kennels/{id}");
         }
 
-        public async Task<KennelDto?> CreateKennelAsync(KennelFormModel model)
+        public async Task<KennelDto> CreateKennelAsync(KennelFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/kennels", model);
             return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<KennelDto>() : null;
@@ -110,12 +110,12 @@ namespace Client.Services
             return await _httpClient.GetFromJsonAsync<List<BookingDto>>("api/bookings") ?? new();
         }
 
-        public async Task<BookingDto?> GetBookingAsync(int id)
+        public async Task<BookingDto> GetBookingAsync(int id)
         {
             return await _httpClient.GetFromJsonAsync<BookingDto>($"api/bookings/{id}");
         }
 
-        public async Task<BookingDto?> CreateBookingAsync(BookingFormModel model)
+        public async Task<BookingDto> CreateBookingAsync(BookingFormModel model)
         {
             var response = await _httpClient.PostAsJsonAsync("api/bookings", model);
             return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<BookingDto>() : null;

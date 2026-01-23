@@ -58,7 +58,7 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private CustomerDto? customer;
+    private CustomerDto customer;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
