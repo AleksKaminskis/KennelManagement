@@ -6,7 +6,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: kennel-management-client
-  AZURE_WEBAPP_PACKAGE_PATH: ./Client/**
+  AZURE_WEBAPP_PACKAGE_PATH: 'Client/**'
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
   WORKING_DIRECTORY: Client
