@@ -162,8 +162,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowBlazorClient", policy =>
     {
         policy.WithOrigins(
-            "https://delightful-coast-03cb8d003.1.azurestaticapps.net",
-            "https://kennel-management-client.azurewebsites.net",
+            "https://kennel-client.azurewebsites.net", 
             "https://localhost:7048",
             "https://localhost:5181",
             "https://localhost:5001",
