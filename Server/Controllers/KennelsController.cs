@@ -53,24 +53,37 @@ namespace Server.Controllers
             try
             {
                 var kennel = await _context.Kennels
-                    .Where(k => k.Id == id)
-                    .Select(k => new KennelDto
-                    {
-                        Id = k.Id,
-                        KennelNumber = k.KennelNumber,
-                        Size = k.Size,
-                        IsOccupied = k.IsOccupied,
-                        Notes = k.Notes,
-                        CreatedAt = k.CreatedAt
-                    })
-                    .FirstOrDefaultAsync();
+                    .Include(k => k.Bookings)
+                        .ThenInclude(b => b.Dog)
+                            .ThenInclude(c => c.Customer)
+                    .FirstOrDefaultAsync(k => k.Id == id);
 
                 if (kennel == null)
                 {
                     return NotFound(new { message = "Kennel not found" });
                 }
 
-                return Ok(kennel);
+                var latestBooking = kennel.Bookings
+                    .FirstOrDefault(b =>
+                        b.CheckInDate <= DateTime.UtcNow &&
+                        b.CheckOutDate >= DateTime.UtcNow);
+
+                var kennelDto = new KennelDto
+                {
+                    Id = kennel.Id,
+                    KennelNumber = kennel.KennelNumber,
+                    Size = kennel.Size,
+                    IsOccupied = kennel.IsOccupied,
+                    Notes = kennel.Notes,
+                    CreatedAt = kennel.CreatedAt,
+                    DogName = latestBooking?.Dog?.Name,
+                    OwnerName = latestBooking?.Dog?.Customer != null
+                        ? $"{latestBooking.Dog.Customer.FirstName} {latestBooking.Dog.Customer.LastName}"
+                        : null,
+                    OwnerPhone = latestBooking?.Dog?.Customer?.PhoneNumber
+                };                    
+                    
+                return Ok(kennelDto);
             }
             catch (Exception ex)
             {

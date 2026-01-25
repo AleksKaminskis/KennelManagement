@@ -10,6 +10,11 @@ namespace Server.DTOs
         public bool IsOccupied { get; set; }
         public string Notes { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+
+        // Occupancy information
+        public string DogName { get; set; } = string.Empty;
+        public string OwnerName { get; set; } = string.Empty;
+        public string OwnerPhone { get; set; } = string.Empty;
     }
 
     public class CreateKennelDto

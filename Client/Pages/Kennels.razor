@@ -65,7 +65,6 @@ else
                         <th>Size</th>
                         <th>Status</th>
                         <th>Notes</th>
-                        <th>Created</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -86,7 +85,6 @@ else
                                 }
                             </td>
                             <td>@kennel.Notes</td>
-                            <td>@kennel.CreatedAt.ToShortDateString()</td>
                             <td>
                                 <button class="btn btn-sm btn-primary" @onclick="() => NavigateToView(kennel.Id)">
                                     <span class="oi oi-eye"></span> View
@@ -133,6 +131,7 @@ else
         ? kennels
         : kennels.Where(k => k.KennelNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
                         || k.Size.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                        || k.DogName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
         );
 
     protected override async Task OnInitializedAsync()

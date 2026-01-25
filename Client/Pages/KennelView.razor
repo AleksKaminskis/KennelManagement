@@ -43,6 +43,20 @@ else if (kennel != null)
                     }
                 </dd>
 
+                @if (kennel.IsOccupied)
+                {
+                    <dt class="col-sm-3">Dog:</dt>
+                    <dd class="col-sm-9">@kennel.DogName</dd>
+
+                    <dt class="col-sm-3">Owner:</dt>
+                    <dd class="col-sm-9">@kennel.OwnerName</dd>
+
+                    <dt class="col-sm-3">Owner Phone:</dt>
+                    <dd class="col-sm-9">
+                        <a href="tel:@kennel.OwnerPhone">@kennel.OwnerPhone</a>
+                    </dd>
+                }
+
                 <dt class="col-sm-3">Notes:</dt>
                 <dd class="col-sm-9">@(string.IsNullOrEmpty(kennel.Notes) ? "None" : kennel.Notes)</dd>
 
